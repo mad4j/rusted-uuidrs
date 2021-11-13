@@ -1,5 +1,6 @@
 use rand::Rng;
 use std::fmt;
+use std::io;
 
 /// 0                   1                   2                   3
 /// 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -16,7 +17,6 @@ use std::fmt;
 #[derive(Copy, Clone, Debug)]
 pub struct UUIDType {
     // xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx
-    // value: [u8; 16],
     time_low: u32,
     time_mid: u16,
     time_hi_and_version: u16,
@@ -26,24 +26,14 @@ pub struct UUIDType {
 
 impl UUIDType {
     pub fn to_bytes(self) -> [u8; 16] {
+
         let mut v: [u8; 16] = [0u8; 16];
 
-        v[0] = ((self.time_low & 0xff000000) >> 24) as u8;
-        v[1] = ((self.time_low & 0x00ff0000) >> 16) as u8;
-        v[2] = ((self.time_low & 0x0000ff00) >> 8) as u8;
-        v[3] = (self.time_low & 0x000000ff) as u8;
-        v[4] = ((self.time_mid & 0xff00) >> 8) as u8;
-        v[5] = (self.time_mid & 0x00ff) as u8;
-        v[6] = ((self.time_hi_and_version & 0xff00) >> 8) as u8;
-        v[7] = (self.time_hi_and_version & 0x00ff) as u8;
-        v[8] = ((self.clk_seq_and_reserved & 0xff00) >> 8) as u8;
-        v[9] = (self.clk_seq_and_reserved & 0x00ff) as u8;
-        v[10] = ((self.node & 0x0000ff0000000000) >> 40) as u8;
-        v[11] = ((self.node & 0x000000ff00000000) >> 32) as u8;
-        v[12] = ((self.node & 0x00000000ff000000) >> 24) as u8;
-        v[13] = ((self.node & 0x0000000000ff0000) >> 16) as u8;
-        v[14] = ((self.node & 0x000000000000ff00) >> 8) as u8;
-        v[15] = (self.node & 0x00000000000000ff) as u8;
+        v[0..4].copy_from_slice(&self.time_low.to_be_bytes());
+        v[4..6].copy_from_slice(&self.time_mid.to_be_bytes());
+        v[7..8].copy_from_slice(&self.time_hi_and_version.to_be_bytes());
+        v[8..10].copy_from_slice(&self.clk_seq_and_reserved.to_be_bytes());
+        v[10..16].copy_from_slice(&self.node.to_be_bytes()[2..]);
 
         v
     }
