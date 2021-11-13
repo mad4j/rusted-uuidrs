@@ -1,6 +1,5 @@
 use rand::Rng;
 use std::fmt;
-use std::io;
 
 /// 0                   1                   2                   3
 /// 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -26,7 +25,6 @@ pub struct UUIDType {
 
 impl UUIDType {
     pub fn to_bytes(self) -> [u8; 16] {
-
         let mut v: [u8; 16] = [0u8; 16];
 
         v[0..4].copy_from_slice(&self.time_low.to_be_bytes());
@@ -39,12 +37,16 @@ impl UUIDType {
     }
 
     pub fn generate_v4_random() -> Self {
+
+        // local random generator
+        let mut rng = rand::thread_rng();
+
         // random bits
-        let time_low = rand::thread_rng().gen::<u32>();
-        let time_mid = rand::thread_rng().gen::<u16>();
-        let mut time_hi_and_version = rand::thread_rng().gen::<u16>();
-        let mut clk_seq_and_reserved = rand::thread_rng().gen::<u16>();
-        let node = rand::thread_rng().gen::<u64>() & 0x0000ffffffffffff;
+        let time_low = rng.gen::<u32>();
+        let time_mid = rng.gen::<u16>();
+        let mut time_hi_and_version = rng.gen::<u16>();
+        let mut clk_seq_and_reserved = rng.gen::<u16>();
+        let node = rng.gen::<u64>() & 0x0000ffffffffffff;
 
         // fix version 4
         time_hi_and_version &= 0b00001111_11111111;

@@ -68,7 +68,6 @@ fn main() {
 
     // generate several ids
     for _ in 0..opt.count {
-
         // generate a new id
         let uuid = match opt.version {
             UuidVersion::V4 => UUIDType::generate_v4_random(),
