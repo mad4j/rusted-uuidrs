@@ -23,20 +23,24 @@ impl FromStr for OutputFormat {
 
 #[derive(Debug)]
 enum UuidVersion {
+    V0,
     V1,
     V2,
     V3,
     V4,
+    V5,
 }
 
 impl FromStr for UuidVersion {
     type Err = i32;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().trim() {
-            "1" | "time" => Ok(UuidVersion::V1),
-            "2" | "v2" => Ok(UuidVersion::V2),
-            "3" | "v3" => Ok(UuidVersion::V3),
+            "0" | "nil" => Ok(UuidVersion::V0),
+            "1" | "mac" => Ok(UuidVersion::V1),
+            "2" | "dce" => Ok(UuidVersion::V2),
+            "3" | "md5" => Ok(UuidVersion::V3),
             "4" | "random" => Ok(UuidVersion::V4),
+            "5" | "sha1" => Ok(UuidVersion::V5),
             _ => Err(-1),
         }
     }
@@ -46,18 +50,18 @@ impl FromStr for UuidVersion {
 #[structopt(
     name = "uuidrs",
     about = "Universally Unique Identifier Command-Line Tool in Rust",
-    author = "daniele.olmisani@gmail.com"
+    author = "github.com/mad4j"
 )]
 struct Opt {
     /// number of ids to be generated
     #[structopt(short, long, default_value = "1")]
     count: u16,
 
-    /// format of generated ids
+    /// format of generated ids {str|siv}
     #[structopt(short, long, default_value = "str")]
     format: OutputFormat,
 
-    /// type of generated ids [ time | 2 | 3 | random ]
+    /// type of generated ids {nil|mac|dce|md5|random|sha1}
     #[structopt(short, long, default_value = "random")]
     version: UuidVersion,
 }
@@ -70,6 +74,8 @@ fn main() {
     for _ in 0..opt.count {
         // generate a new id
         let uuid = match opt.version {
+            UuidVersion::V0 => UUIDType::generate_v0_nil(),
+            UuidVersion::V1 => UUIDType::generate_v1_mac(),
             UuidVersion::V4 => UUIDType::generate_v4_random(),
             _ => UUIDType::generate_v4_random(),
         };
