@@ -1,7 +1,15 @@
 [package]
 name = "uuidrs"
 version = "0.1.0"
+authors = ["Daniele Olmisani <daniele.olmisani@gmail.com>"]
+license = "GPL-3.0"
 edition = "2021"
+description = "Universally Unique Identifier Command-Line Tool in Rust"
+readme = "README.md"
+homepage = "https://mad4j.github.io/rusted-uuidrs/"
+repository = "https://github.com/mad4j/rusted-uuidrs"
+keywords = ["cli", "uuid", "rfc4122"]
+categories = ["command-line-utilities"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -2,7 +2,7 @@
 
 simple UUID command line generation tool
 
-``` bash
+```
 uuidrs 0.1.0
 github.com/mad4j
 Universally Unique Identifier Command-Line Tool in Rust
