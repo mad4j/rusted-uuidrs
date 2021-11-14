@@ -23,6 +23,7 @@ pub struct UUIDType {
     node: u64,
 }
 
+#[allow(dead_code)]
 pub enum Variant {
     /// Reserved by the NCS for backward compatibility.
     NCS,
@@ -33,6 +34,7 @@ pub enum Variant {
     /// Reserved for future expansion.
     RESERVED,
 }
+
 
 impl UUIDType {
     pub fn as_bytes(self) -> [u8; 16] {
@@ -46,7 +48,7 @@ impl UUIDType {
         v[7..8].copy_from_slice(&self.time_hi_and_version.to_be_bytes());
         v[8..10].copy_from_slice(&self.clk_seq_and_reserved.to_be_bytes());
         v[10..16].copy_from_slice(&self.node.to_be_bytes()[2..]);
-
+        
         // return buffer
         v
     }
