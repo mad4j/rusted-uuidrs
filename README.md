@@ -1,4 +1,4 @@
-# rusted-uuidrs
+# uuidrs
 
 simple UUID command line generation tool
 
