@@ -36,10 +36,10 @@ impl FromStr for UuidVersion {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().trim() {
             "0" | "nil" => Ok(UuidVersion::V0),
-            "1" | "mac" => Ok(UuidVersion::V1),
+            "1" | "time" => Ok(UuidVersion::V1),
             "2" | "dce" => Ok(UuidVersion::V2),
             "3" | "md5" => Ok(UuidVersion::V3),
-            "4" | "random" => Ok(UuidVersion::V4),
+            "4" | "rnd" => Ok(UuidVersion::V4),
             "5" | "sha1" => Ok(UuidVersion::V5),
             _ => Err(-1),
         }
@@ -61,8 +61,8 @@ struct Opt {
     #[structopt(short, long, default_value = "str")]
     format: OutputFormat,
 
-    /// type of generated ids {nil|mac|dce|md5|random|sha1}
-    #[structopt(short, long, default_value = "random")]
+    /// type of generated ids {time|mac|dce|md5|rnd|sha1}
+    #[structopt(short, long, default_value = "rnd")]
     version: UuidVersion,
 }
 
@@ -75,7 +75,7 @@ fn main() {
         // generate a new id
         let uuid = match opt.version {
             UuidVersion::V0 => UUIDType::generate_v0_nil(),
-            UuidVersion::V1 => UUIDType::generate_v1_mac(),
+            UuidVersion::V1 => UUIDType::generate_v1_time(),
             UuidVersion::V4 => UUIDType::generate_v4_random(),
             _ => UUIDType::generate_v4_random(),
         };

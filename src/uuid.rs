@@ -1,3 +1,4 @@
+use chrono;
 use rand::Rng;
 use std::fmt;
 
@@ -28,17 +29,15 @@ pub enum Variant {
     /// Reserved by the NCS for backward compatibility.
     NCS,
     /// As described in the RFC4122 Specification (default).
-    RFC,
+    DCE,
     /// Reserved by Microsoft for backward compatibility.
     MICROSOFT,
     /// Reserved for future expansion.
     RESERVED,
 }
 
-
 impl UUIDType {
     pub fn as_bytes(self) -> [u8; 16] {
-
         // initialize a zero-filled buffer
         let mut v: [u8; 16] = [0u8; 16];
 
@@ -48,23 +47,18 @@ impl UUIDType {
         v[7..8].copy_from_slice(&self.time_hi_and_version.to_be_bytes());
         v[8..10].copy_from_slice(&self.clk_seq_and_reserved.to_be_bytes());
         v[10..16].copy_from_slice(&self.node.to_be_bytes()[2..]);
-        
+
         // return buffer
         v
     }
 
-    fn full_random() -> Self {
-        // local random generator
-        let mut rng = rand::thread_rng();
+    pub fn from_bytes(b: [u8; 16]) -> Self {
+        let time_low = u32::from_be_bytes([b[0], b[1], b[2], b[3]]);
+        let time_mid = u16::from_be_bytes([b[4], b[5]]);
+        let time_hi_and_version = u16::from_be_bytes([b[6], b[7]]);
+        let clk_seq_and_reserved = u16::from_be_bytes([b[8], b[9]]);
+        let node = u64::from_be_bytes([0, 0, b[10], b[11], b[12], b[13], b[14], b[15]]);
 
-        // random bits
-        let time_low = rng.gen::<u32>();
-        let time_mid = rng.gen::<u16>();
-        let time_hi_and_version = rng.gen::<u16>();
-        let clk_seq_and_reserved = rng.gen::<u16>();
-        let node = rng.gen::<u64>() & 0x0000ffffffffffff;
-
-        // return generated value
         UUIDType {
             time_low,
             time_mid,
@@ -74,64 +68,92 @@ impl UUIDType {
         }
     }
 
-    fn set_version(&mut self, value: u8) {
+    pub fn full_random() -> Self {
+        UUIDType::from_bytes(rand::thread_rng().gen::<[u8; 16]>())
+    }
 
+    pub fn set_version(&mut self, value: u8) {
         let value = (value as u16 & 0x0f) << 12;
 
         self.time_hi_and_version &= 0x0fff;
         self.time_hi_and_version |= value;
     }
 
-    fn set_variant(&mut self, value: Variant) {
-
+    pub fn set_variant(&mut self, value: Variant) {
         let temp = self.clk_seq_and_reserved;
 
         self.clk_seq_and_reserved = match value {
             Variant::NCS => temp & 0x7fff,
-            Variant::RFC => (temp & 0x3fff) | 0x8000,
+            Variant::DCE => (temp & 0x3fff) | 0x8000,
             Variant::MICROSOFT => (temp & 0x1fff) | 0xc000,
             Variant::RESERVED => (temp & 0x1ff) | 0xe000,
         }
     }
 
-    pub fn generate_v0_nil() -> Self {
-        UUIDType {
-            time_low: 0,
-            time_mid: 0,
-            time_hi_and_version: 0,
-            clk_seq_and_reserved: 0,
-            node: 0,
-        }
+    pub fn set_time(&mut self, timestamp: u64) {
+        // set time low-bits
+        self.time_low = (timestamp & 0xffffffff) as u32;
+
+        // set time mid-bits
+        self.time_mid = ((timestamp >> 32) & 0xffff) as u16;
+
+        // clear time-low bits preserving version bits
+        self.time_hi_and_version &= 0xf000;
+
+        // set time hi-bits preserving version bits
+        self.time_hi_and_version |= ((timestamp >> 48) & 0x0fff) as u16;
     }
 
-    pub fn generate_v1_mac() -> Self {
-        
+    pub fn get_time(&self) -> u64 {
+        ((self.time_hi_and_version & 0x0fff) as u64) << 48
+            | (self.time_mid as u64) << 32
+            | self.time_low as u64
+    }
+
+    pub fn generate_random_node(&self) -> u64 {
+        // generate a random multicast MAC code
+        (rand::thread_rng().gen::<u64>() & 0x0000ffffffffffff) | 0x00001000_00000000
+    }
+
+    pub fn generate_v0_nil() -> Self {
+        UUIDType::from_bytes([0u8; 16])
+    }
+
+    pub fn generate_v1_time() -> Self {
         // initialize using random values
         let mut uuid = UUIDType::full_random();
 
-        // version 1
+        // set version
         uuid.set_version(1);
 
-        // variant 1
-        uuid.set_variant(Variant::RFC);
+        // set variant
+        uuid.set_variant(Variant::DCE);
 
         // set broadcast address bit
-        uuid.node |= 0x00008000_00000000;
-        
+        uuid.node |= 0x00001000_00000000;
+
+        // Offset between UUID formatted times and Unix formatted times.
+        // UUID UTC base time is October 15, 1582.
+        // Unix base time is January 1, 1970
+        let nanos = chrono::offset::Utc::now().timestamp_nanos() as u64;
+        let timestamp = nanos / 100 + 0x01b2_1dd2_1381_4000;
+
+        // set time
+        uuid.set_time(timestamp);
+
         // return generated value
         uuid
     }
 
     pub fn generate_v4_random() -> Self {
-        
-        // initialize using random values 
+        // initialize using random values
         let mut uuid = UUIDType::full_random();
 
-        // version 4
+        // set version
         uuid.set_version(4);
 
-        // variant 1
-        uuid.set_variant(Variant::RFC);
+        // set variant
+        uuid.set_variant(Variant::DCE);
 
         // return generated value
         uuid
